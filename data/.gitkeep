@@ -1,0 +1,7 @@
+# Place the 6 HR CSV files here:
+# Dim_Employees.csv
+# Dim_Departments.csv
+# Dim_Roles.csv
+# Fact_Attendance.csv
+# Fact_Leaves.csv
+# Fact_Lifecycle.csv

@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Solid HR Data Agent</title>
+  <link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="logo">S</div>
+        <div>
+          <h1>Solid</h1>
+          <p>HR Data AI Agent</p>
+        </div>
+      </div>
+
+      <section class="panel">
+        <h2>Knowledge base</h2>
+        <p class="hint">Upload these exact filenames:</p>
+        <ul id="file-list" class="file-list"></ul>
+        <label class="upload">
+          <input id="file-input" type="file" accept=".csv" multiple />
+          Upload CSV files
+        </label>
+        <p id="upload-msg" class="status-msg"></p>
+      </section>
+
+      <section class="panel">
+        <h2>Try asking</h2>
+        <button class="chip" data-q="What is the total financial liability of unused PTO days for active employees, broken down by department?">PTO liability by department</button>
+        <button class="chip" data-q="What is the pay gap percentage between mothers and men with the same job titles in the R&D department?">R&amp;D motherhood pay gap</button>
+        <button class="chip" data-q="Which managers have the highest team overtime and termination risk?">Manager burnout heatmap</button>
+      </section>
+    </aside>
+
+    <main class="chat">
+      <header class="chat-header">
+        <div>
+          <h2>Ask the HR analyst</h2>
+          <p id="model-label">Model: gpt-4.1</p>
+        </div>
+        <span id="ready-badge" class="badge">Waiting for data</span>
+      </header>
+
+      <div id="messages" class="messages">
+        <div class="bubble assistant">
+          Hello. I am the Solid HR Data Agent. Upload the 6 CSV files, then ask about headcount, PTO liability, resignation risk, pay equity, or overtime.
+        </div>
+      </div>
+
+      <form id="composer" class="composer">
+        <textarea id="input" rows="1" placeholder="Ask a question about the HR data..."></textarea>
+        <button type="submit" id="send">Send</button>
+      </form>
+    </main>
+  </div>
+  <script src="/static/app.js"></script>
+</body>
+</html>
