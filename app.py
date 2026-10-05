@@ -1,12 +1,10 @@
-import io
 import json
 import os
-import traceback
-from contextlib import redirect_stdout
+import subprocess
+import sys
 from pathlib import Path
 from typing import Any
 
-import numpy as np
 import pandas as pd
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
@@ -22,8 +20,11 @@ load_dotenv()
 ROOT = Path(__file__).resolve().parent
 DATA_DIR = ROOT / "data"
 STATIC_DIR = ROOT / "static"
+CACHE_DIR = ROOT / ".cache"
+CACHE_PATH = CACHE_DIR / "frames.pkl"
 DATA_DIR.mkdir(exist_ok=True)
 STATIC_DIR.mkdir(exist_ok=True)
+CACHE_DIR.mkdir(exist_ok=True)
 
 CSV_FILES = {
     "df_employees": "Dim_Employees.csv",
@@ -56,6 +57,8 @@ def load_csvs() -> None:
         path = DATA_DIR / filename
         if path.exists():
             frames[key] = pd.read_csv(path)
+    if frames:
+        pd.to_pickle(frames, CACHE_PATH)
 
 
 def schema_summary() -> str:
@@ -72,51 +75,29 @@ def schema_summary() -> str:
     return "\n".join(parts)
 
 
-def _sandbox_builtins() -> dict[str, Any]:
-    source = __builtins__ if isinstance(__builtins__, dict) else vars(__builtins__)
-    allowed = dict(source)
-    for name in ("open", "exec", "eval", "compile", "__import__", "input", "breakpoint"):
-        allowed.pop(name, None)
-    return allowed
-
-
 def run_pandas(code: str) -> str:
-    if not frames:
-        return "ERROR: CSV files are not loaded yet. Upload the 6 HR files first."
+    if not frames or not CACHE_PATH.exists():
+        return "ERROR: CSV files are not loaded yet. Place them in the data folder and restart the server."
 
-    blocked = ("__import__", "import ", "open(", "exec(", "eval(", "os.", "sys.", "subprocess", "pathlib", "shutil")
-    for token in blocked:
-        if token in code:
-            return f"ERROR: The code is not allowed to use '{token.strip()}'."
-
-    stdout = io.StringIO()
-    sandbox = {
-        "__builtins__": _sandbox_builtins(),
-        "pd": pd,
-        "np": np,
-        "df_employees": frames.get("df_employees"),
-        "df_departments": frames.get("df_departments"),
-        "df_roles": frames.get("df_roles"),
-        "df_attendance": frames.get("df_attendance"),
-        "df_leaves": frames.get("df_leaves"),
-        "df_lifecycle": frames.get("df_lifecycle"),
-    }
     try:
-        with redirect_stdout(stdout):
-            exec(code, sandbox, sandbox)
-    except Exception:
-        return f"ERROR while running pandas code:\n{traceback.format_exc(limit=4)}"
+        proc = subprocess.run(
+            [sys.executable, str(ROOT / "pandas_runner.py")],
+            input=json.dumps({"code": code, "cache": str(CACHE_PATH)}),
+            capture_output=True,
+            text=True,
+            timeout=90,
+        )
+    except subprocess.TimeoutExpired:
+        return "ERROR: The query timed out. Please ask a simpler or more specific question."
 
-    output = stdout.getvalue().strip()
-    if not output:
-        result = sandbox.get("result")
-        if result is not None:
-            output = str(result)
-        else:
-            output = "Code ran successfully but printed nothing. Print the final DataFrame or number."
-    if len(output) > 12000:
-        output = output[:12000] + "\n... (truncated)"
-    return output
+    if proc.returncode != 0:
+        err = (proc.stderr or "").strip()[-2000:]
+        return (
+            "ERROR: The data query crashed. Please rephrase the question.\n"
+            + (err or f"Process exited with code {proc.returncode}.")
+        )
+    output = (proc.stdout or "").strip()
+    return output or "Code ran successfully but printed nothing. Print the final DataFrame or number."
 
 
 TOOLS = [
@@ -175,7 +156,6 @@ def index() -> FileResponse:
 
 @app.get("/api/status")
 def status() -> dict[str, Any]:
-    load_csvs()
     files = []
     for key, filename in CSV_FILES.items():
         df = frames.get(key)
@@ -206,7 +186,8 @@ def reload_data() -> dict[str, Any]:
 def chat(req: ChatRequest) -> dict[str, Any]:
     if not req.message.strip():
         raise HTTPException(status_code=400, detail="Message is empty.")
-    load_csvs()
+    if not frames:
+        load_csvs()
     if len(frames) < len(CSV_FILES):
         missing = [name for key, name in CSV_FILES.items() if key not in frames]
         raise HTTPException(

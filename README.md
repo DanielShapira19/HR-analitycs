@@ -6,7 +6,7 @@ The UI is a simple chat page. The backend uses OpenAI **gpt-4.1** (fallback: **g
 
 ## Requirements
 
-- Python 3.11+ (3.14 works)
+- Python 3.12 (recommended; 3.14 can crash with Pandas on macOS)
 - An OpenAI API key
 
 ## Project layout
@@ -28,7 +28,7 @@ requirements.txt
 2. Create and activate a virtual environment:
 
 ```bash
-python3 -m venv .venv
+python3.12 -m venv .venv
 source .venv/bin/activate
 ```
 
