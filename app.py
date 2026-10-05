@@ -9,7 +9,7 @@ from typing import Any
 import numpy as np
 import pandas as pd
 from dotenv import load_dotenv
-from fastapi import FastAPI, File, HTTPException, UploadFile
+from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from openai import OpenAI
@@ -34,7 +34,6 @@ CSV_FILES = {
     "df_lifecycle": "Fact_Lifecycle.csv",
 }
 
-ALLOWED_UPLOADS = set(CSV_FILES.values())
 PREFERRED_MODEL = os.getenv("OPENAI_MODEL", "gpt-4.1")
 FALLBACK_MODEL = "gpt-4o"
 
@@ -197,22 +196,6 @@ def status() -> dict[str, Any]:
     }
 
 
-@app.post("/api/upload")
-async def upload(files: list[UploadFile] = File(...)) -> dict[str, Any]:
-    saved = []
-    rejected = []
-    for file in files:
-        name = Path(file.filename or "").name
-        if name not in ALLOWED_UPLOADS:
-            rejected.append(name)
-            continue
-        content = await file.read()
-        (DATA_DIR / name).write_bytes(content)
-        saved.append(name)
-    load_csvs()
-    return {"saved": saved, "rejected": rejected, "status": status()}
-
-
 @app.post("/api/reload")
 def reload_data() -> dict[str, Any]:
     load_csvs()
@@ -228,7 +211,7 @@ def chat(req: ChatRequest) -> dict[str, Any]:
         missing = [name for key, name in CSV_FILES.items() if key not in frames]
         raise HTTPException(
             status_code=400,
-            detail=f"Upload all 6 CSV files first. Missing: {', '.join(missing)}",
+            detail=f"Missing CSV files in the data folder: {', '.join(missing)}",
         )
 
     client = get_client()

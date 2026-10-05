@@ -67,10 +67,7 @@ The agent expects these **exact filenames**:
 | `Fact_Leaves.csv` | Leaves |
 | `Fact_Lifecycle.csv` | Career events (promotion, resignation, etc.) |
 
-Two ways to load them:
-
-- Copy the files into the `data/` folder, or
-- Start the app and use **Upload CSV files** in the left sidebar.
+Put the files in the `data/` folder. The chat UI only reads from that folder (there is no upload button).
 
 Chat is blocked until all six files are present.
 

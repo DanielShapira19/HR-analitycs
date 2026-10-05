@@ -3,8 +3,6 @@ const inputEl = document.getElementById("input");
 const formEl = document.getElementById("composer");
 const sendEl = document.getElementById("send");
 const fileListEl = document.getElementById("file-list");
-const fileInputEl = document.getElementById("file-input");
-const uploadMsgEl = document.getElementById("upload-msg");
 const readyBadgeEl = document.getElementById("ready-badge");
 const modelLabelEl = document.getElementById("model-label");
 
@@ -91,20 +89,6 @@ inputEl.addEventListener("keydown", (e) => {
 
 document.querySelectorAll(".chip").forEach((btn) => {
   btn.addEventListener("click", () => sendMessage(btn.dataset.q));
-});
-
-fileInputEl.addEventListener("change", async () => {
-  const files = fileInputEl.files;
-  if (!files.length) return;
-  const body = new FormData();
-  for (const file of files) body.append("files", file);
-  uploadMsgEl.textContent = "Uploading...";
-  const res = await fetch("/api/upload", { method: "POST", body });
-  const data = await res.json();
-  renderStatus(data.status);
-  const rejected = data.rejected && data.rejected.length ? ` Ignored: ${data.rejected.join(", ")}` : "";
-  uploadMsgEl.textContent = `Saved ${data.saved.length} file(s).${rejected}`;
-  fileInputEl.value = "";
 });
 
 loadStatus();
