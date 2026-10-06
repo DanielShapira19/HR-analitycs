@@ -1,0 +1,12 @@
+Role_ID,Role_Category,Job_Title,Department_ID,Is_Manager,WFH_Days
+1,Engineering,Software Engineer,1,False,3
+2,Engineering,Data Scientist,1,False,3
+3,Management,R&D Team Lead,1,True,2
+4,Sales,Account Executive,2,False,1
+5,Management,Sales Director,2,True,1
+6,Human Resources,HR Business Partner,3,False,2
+7,Management,VP HR,3,True,2
+8,Finance,Financial Analyst,4,False,2
+9,Management,CFO,4,True,2
+10,Customer Support,Tier 2 Support,5,False,0
+11,Management,Support Team Lead,5,True,1
